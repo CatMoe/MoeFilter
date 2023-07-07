@@ -2,6 +2,7 @@ package catmoe.fallencrystal.moefilter.util.message
 
 import catmoe.fallencrystal.moefilter.util.message.component.ComponentUtil
 import com.github.benmanes.caffeine.cache.Caffeine
+import net.md_5.bungee.BungeeTitle
 import net.md_5.bungee.api.*
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
@@ -9,6 +10,8 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 
+@Deprecated("Please use MessageUtil v2")
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 object MessageUtil {
 
     private val logger = ProxyServer.getInstance().logger
@@ -28,12 +31,6 @@ object MessageUtil {
         val returnText = mutableListOf<String>()
         for (it in text) { returnText.add(colorize(it)) }
         return returnText
-    }
-
-    fun messageBuilder(startIndex: Int, args: Array<out String>?): StringBuilder {
-        val message = StringBuilder()
-        if (args != null) { for (i in startIndex until args.size) { message.append(args[i]).append(" ") } }
-        return message
     }
 
     fun sendMessage(sender: CommandSender, message: String) { if (sender !is ProxiedPlayer) { logInfo(message); return } else { sendMessage(sender, message) } }
@@ -76,7 +73,7 @@ object MessageUtil {
     fun titleBuilder(title: String, subtitle: String, stay: Int, fadeIn: Int, fadeOut: Int): Title { return titleBuilder(TextComponent(title), TextComponent(subtitle), stay, fadeIn, fadeOut) }
 
     fun titleBuilder(title: BaseComponent, subtitle: BaseComponent, stay: Int, fadeIn: Int, fadeOut: Int): Title {
-        val t = ProxyServer.getInstance().createTitle()
+        val t = BungeeTitle()
         t.title(title); t.subTitle(subtitle); t.stay(stay); t.fadeIn(fadeIn); t.fadeOut(fadeOut); return t
     }
 }

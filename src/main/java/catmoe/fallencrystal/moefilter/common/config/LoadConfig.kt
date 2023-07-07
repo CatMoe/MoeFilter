@@ -2,7 +2,7 @@ package catmoe.fallencrystal.moefilter.common.config
 
 import catmoe.fallencrystal.moefilter.MoeFilter
 import catmoe.fallencrystal.moefilter.common.config.util.CreateConfig
-import catmoe.fallencrystal.moefilter.util.message.MessageUtil
+import catmoe.fallencrystal.moefilter.util.message.v2.MessageUtil
 import com.typesafe.config.Config
 import net.md_5.bungee.api.ProxyServer
 import java.io.File
@@ -12,6 +12,7 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.concurrent.schedule
 
+@Suppress("SpellCheckingInspection")
 class LoadConfig {
     private val path = MoeFilter.instance.dataFolder.absolutePath
 
@@ -64,13 +65,17 @@ class LoadConfig {
                     # 当Ping到达throttle时 使用缓存而不是为每个请求都呼叫ProxyPingEvent
                     disable-calling-throttle=10
                 }
+                
+                # 每秒连接数限制. 当您正在使用PIPELINE模式时非常有用.
+                # EVENT模式此throttle关闭连接的效率比BungeeCord自带的低
+                throttle-limit=3
             """.trimIndent()
 
     private val defaultMessage = """
                 version="$version"
                 # API v6已经切换到MiniMessage.
                 prefix="<gradient:#F9A8FF:#97FFFF>MoeFilter</gradient> <gray>>> "
-                reload-warn="<yellow>您可以使用重载命令重载配置文件. 但实际上这可能会意外地破坏某些东西. 如果可以 请尽快重启代理而非使用reload命令."
+                reload-warn="<green>已重新加载配置文件 部分内容可能需要重启代理生效."
                 
                 actionbar {
                     # 可用占位符: 
@@ -169,9 +174,15 @@ class LoadConfig {
                     # DISABLED: 禁用
                     join-ping-mixin-mode=PING_AFTER_RECONNECT
                     
-                    // 有效名称正则. 默认正则的规则
-                    // 即名称不能包含mcstorm, mcdown或bot字样. 名称只能含有数字 字母以及下划线 且长度限制在3-16
-                    valid-regex="^(?!.*(?:mcstorm|mcdown|bot))[A-Za-z0-9_]{3,16}${'$'}"
+                    # join+ping的检查的缓存过期时间 (秒)
+                    # 如果您或您的玩家遇到连续要求的问题
+                    # 请尝试将值调高直到适合您或您的玩家通过检查
+                    # 但也不要填写一个较大的值.
+                    max-cache-time=10
+                    
+                    # 有效名称正则. 默认正则的规则
+                    # 即名称不能包含mcstorm, mcdown或bot字样. 名称只能含有数字 字母以及下划线 且长度限制在3-16
+                    valid-regex="^(?!.*(?:mcstorm|mcdown|bot|cuute))[A-Za-z0-9_]{3,16}${'$'}"
                 }
     """.trimIndent()
 

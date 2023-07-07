@@ -8,12 +8,12 @@
     
     <groupId>catmoe.fallencrystal.moefilter</groupId>
     <artifactId>MoeFilter</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.8.22</kotlin.version>
-        <project.version>0.0.2</project.version>
+        <kotlin.version>1.9.0</kotlin.version>
+        <project.version>0.0.3</project.version>
     </properties>
     <packaging>jar</packaging>
 
@@ -207,10 +207,18 @@
             <scope>compile</scope>
             <version>4.14.0</version>
         </dependency>
+        <!--suppress VulnerableLibrariesLocal -->
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-text-serializer-gson</artifactId>
             <version>4.14.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>4.14.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -221,6 +229,7 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -237,7 +246,8 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-jps-plugin</artifactId>
-            <version>1.8.22</version>
+            <version>1.9.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!--suppress VulnerableLibrariesLocal -->
