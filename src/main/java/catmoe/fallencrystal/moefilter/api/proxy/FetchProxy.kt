@@ -1,16 +1,31 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.api.proxy
 
 import catmoe.fallencrystal.moefilter.MoeFilter
+import catmoe.fallencrystal.moefilter.common.check.proxy.type.ProxyResult
+import catmoe.fallencrystal.moefilter.common.check.proxy.type.ProxyResultType
+import catmoe.fallencrystal.moefilter.common.check.proxy.util.ClientHelper
 import catmoe.fallencrystal.moefilter.common.config.LocalConfig
-import catmoe.fallencrystal.moefilter.common.utils.proxy.type.ProxyResult
-import catmoe.fallencrystal.moefilter.common.utils.proxy.type.ProxyResultType
 import catmoe.fallencrystal.moefilter.util.message.v2.MessageUtil
 import catmoe.fallencrystal.moefilter.util.plugin.util.Scheduler
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
 import java.net.UnknownHostException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -27,40 +42,24 @@ class FetchProxy {
     private var count = 0
     private val scheduler = Scheduler(plugin)
 
-    private var proxyType = updateProxyType()
     private val scheduleTaskId = AtomicInteger(0)
 
     private fun initSchedule() {
-        if (scheduleTaskId.get() != 0) {
-            scheduler.cancelTask(scheduleTaskId.get())
-            scheduleTaskId.set(0)
-        }
+        if (scheduleTaskId.get() != 0) { scheduler.cancelTask(scheduleTaskId.get()); scheduleTaskId.set(0) }
         val schedule = Scheduler(plugin).repeatScheduler(updateDelay, TimeUnit.HOURS) { get() }
         scheduleTaskId.set(schedule.id)
-    }
-
-    private fun updateProxyType(): Proxy.Type {
-        val proxyType=(try { Proxy.Type.valueOf(config.getAnyRef("proxies-config.mode").toString()) } catch (ex: IllegalArgumentException) { MessageUtil.logWarn("[MoeFilter] [FetchProxy] Unknown proxy type ${config.getAnyRef("proxies-config.mode")}, Fallback to DIRECT."); Proxy.Type.DIRECT } )
-        this.proxyType=proxyType
-        return proxyType
     }
 
     fun get() { get(proxies) }
 
     fun get(lists: List<String>) {
         MessageUtil.logInfo("[MoeFilter] [ProxyFetch] Starting Async proxy fetcher. (${proxies.size} Threads)")
-        if (proxyType != Proxy.Type.DIRECT) { MessageUtil.logInfo("[MoeFilter] [ProxyFetch] Applying HTTP proxy to help fetch proxies.") }
         for (it in lists) {
             scheduler.runAsync {
                 try {
-                    val client = OkHttpClient().newBuilder()
-                    if (proxyType != Proxy.Type.DIRECT) {
-                        val proxyConfig = Proxy(proxyType, InetSocketAddress(config.getString("proxies-config.host"), config.getInt("proxies-config.port")))
-                        client.proxy(proxyConfig)
-                    }
-                    val call = client.build()
-                    val request = Request.Builder().url(it).build()
-                    val response = call.newCall(request).execute()
+                    val client = ClientHelper(OkHttpClient.Builder(), it)
+                    client.setProxy(true)
+                    val response = client.getResponse()
                     val regex = Regex("""(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)""")
                     if (response.isSuccessful) {
                         val lines = response.body?.string()?.split("\n")
@@ -99,6 +98,5 @@ class FetchProxy {
         } else { if (enabled) { initSchedule() } }
         this.debug = config.getBoolean("internal.debug")
         this.config = config
-        updateProxyType()
     }
 }

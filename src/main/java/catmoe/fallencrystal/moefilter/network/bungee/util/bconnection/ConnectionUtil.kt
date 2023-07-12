@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.network.bungee.util.bconnection
 
 import catmoe.fallencrystal.moefilter.common.config.LocalConfig
@@ -11,8 +28,9 @@ import net.md_5.bungee.protocol.DefinedPacket
 import java.lang.reflect.Field
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.SocketAddress
 
-@Suppress("UNUSED")
+@Suppress("UNUSED", "MemberVisibilityCanBePrivate")
 class ConnectionUtil(val connection: PendingConnection) {
     private val bungee = BungeeCord.getInstance()
 
@@ -24,7 +42,13 @@ class ConnectionUtil(val connection: PendingConnection) {
 
     fun isConnected(): Boolean { return connection.isConnected }
 
-    fun inetAddress(): InetAddress { return (connection.socketAddress as InetSocketAddress).address }
+    fun socketAddress(): SocketAddress { return connection.socketAddress }
+
+    fun inetSocketAddress(): InetSocketAddress { return socketAddress() as InetSocketAddress }
+
+    fun virtualHost(): InetSocketAddress { return connection.virtualHost }
+
+    fun inetAddress(): InetAddress { return inetSocketAddress().address }
 
     fun close() { pipeline?.close() ?: connection.disconnect() }
 

@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.util.plugin
 
 import catmoe.fallencrystal.moefilter.MoeFilter
@@ -12,11 +29,11 @@ import catmoe.fallencrystal.moefilter.api.user.displaycache.DisplayCache
 import catmoe.fallencrystal.moefilter.common.config.LoadConfig
 import catmoe.fallencrystal.moefilter.common.config.LocalConfig
 import catmoe.fallencrystal.moefilter.common.config.ReloadConfig
-import catmoe.fallencrystal.moefilter.common.utils.counter.ConnectionCounter
-import catmoe.fallencrystal.moefilter.common.utils.counter.SessionCounterListener
-import catmoe.fallencrystal.moefilter.common.utils.maxmind.CountryMode
-import catmoe.fallencrystal.moefilter.common.utils.maxmind.DownloadDatabase
-import catmoe.fallencrystal.moefilter.common.utils.maxmind.InquireCountry
+import catmoe.fallencrystal.moefilter.common.counter.ConnectionCounter
+import catmoe.fallencrystal.moefilter.common.counter.SessionCounterListener
+import catmoe.fallencrystal.moefilter.common.geoip.CountryMode
+import catmoe.fallencrystal.moefilter.common.geoip.DownloadDatabase
+import catmoe.fallencrystal.moefilter.common.geoip.GeoIPManager
 import catmoe.fallencrystal.moefilter.common.utils.system.CPUMonitor
 import catmoe.fallencrystal.moefilter.common.whitelist.WhitelistListener
 import catmoe.fallencrystal.moefilter.listener.main.ExceptionFilter
@@ -24,14 +41,13 @@ import catmoe.fallencrystal.moefilter.network.InitChannel
 import catmoe.fallencrystal.moefilter.network.bungee.util.WorkingMode
 import catmoe.fallencrystal.moefilter.network.bungee.util.WorkingMode.*
 import catmoe.fallencrystal.moefilter.util.bungee.BungeeEvent
-import catmoe.fallencrystal.moefilter.util.message.v2.MessageUtil
 import catmoe.fallencrystal.moefilter.util.message.notification.Notifications
+import catmoe.fallencrystal.moefilter.util.message.v2.MessageUtil
 import catmoe.fallencrystal.moefilter.util.plugin.luckperms.LuckPermsRegister
 import catmoe.fallencrystal.moefilter.util.plugin.util.Scheduler
 import com.typesafe.config.ConfigException
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.plugin.Plugin
-import java.nio.file.Paths
 
 class AsyncLoader(val plugin: Plugin) {
     private val proxy = ProxyServer.getInstance()
@@ -116,11 +132,12 @@ class AsyncLoader(val plugin: Plugin) {
 
     private fun loadMaxmindDatabase() {
         scheduler.runAsync {
+            GeoIPManager
             val folder = MoeFilter.instance.dataFolder
             val maxmindLicense = try { LocalConfig.getProxy().getString("country.key") } catch (_: Exception) { null }
             if (maxmindLicense.isNullOrEmpty()) { MessageUtil.logWarn("[MoeFilter] [GeoIP] Your maxmind license is empty. Country mode are disabled."); return@runAsync }
-            if (!Paths.get("${folder.absolutePath}/geolite/GeoLite2-Country.mmdb").toFile().exists()) { DownloadDatabase(folder, maxmindLicense) }
-            InquireCountry
+            // if (!Paths.get("${folder.absolutePath}/geolite/GeoLite2-Country.mmdb").toFile().exists()) { DownloadDatabase(folder, maxmindLicense) }
+            DownloadDatabase(folder)
         }
     }
 

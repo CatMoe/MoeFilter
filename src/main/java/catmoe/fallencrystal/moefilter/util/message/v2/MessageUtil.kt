@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.util.message.v2
 
 import catmoe.fallencrystal.moefilter.MoeFilter
@@ -124,11 +141,15 @@ object MessageUtil {
         return message
     }
 
-    fun logInfo(message: String) { logger.log(Level.INFO, colorize(message).toLegacyText()) }
+    fun logInfo(message: String) { logger.log(Level.INFO, logColorize(message)) }
 
-    fun logWarn(message: String) { logger.log(Level.WARNING, colorize(message).toLegacyText()) }
+    fun logWarn(message: String) { logger.log(Level.WARNING, logColorize(message)) }
 
-    fun logError(message: String) { logger.log(Level.SEVERE, colorize(message).toLegacyText()) }
+    fun logError(message: String) { logger.log(Level.SEVERE, logColorize(message)) }
 
     fun colorize(message: String): BaseComponent { return ComponentUtil.toBaseComponents(ComponentUtil.parse(message)) }
+
+    private fun logColorize(message: String): String {
+        return if (message.contains(">") && message.contains(">")) colorize(message).toLegacyText() else message
+    }
 }

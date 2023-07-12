@@ -1,9 +1,26 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.api.command
 
 import catmoe.fallencrystal.moefilter.api.command.annotation.*
 import catmoe.fallencrystal.moefilter.api.command.annotation.misc.DescriptionFrom.MESSAGE_PATH
 import catmoe.fallencrystal.moefilter.api.command.annotation.misc.DescriptionFrom.STRING
-import catmoe.fallencrystal.moefilter.api.command.annotation.parse.ParsedInfo
+import catmoe.fallencrystal.moefilter.api.command.annotation.misc.ParsedInfo
 import catmoe.fallencrystal.moefilter.common.config.LocalConfig
 import com.github.benmanes.caffeine.cache.Caffeine
 import net.md_5.bungee.api.CommandSender
@@ -21,11 +38,11 @@ object CommandManager {
     fun register(c: ICommand) {
         val iClass = c::class.java
         if (iClass.isAnnotationPresent(DebugCommand::class.java) && !(try { LocalConfig.getConfig().getBoolean("debug") } catch (_: Exception) { false })) return
-        val annotationCommand = ( try { iClass.getAnnotation(Command::class.java).command } catch (_:Exception) { iClass.simpleName.lowercase().replace("command", "") } )
-        val annotationPermission = ( try { val permission= iClass.getAnnotation(CommandPermission::class.java).permission; permission.ifEmpty { "moefilter.$annotationCommand" } } catch (_: Exception) { "moefilter.$annotationCommand" } )
+        val annotationCommand = (try { iClass.getAnnotation(Command::class.java).command } catch (_:Exception) { iClass.simpleName.lowercase().replace("command", "") })
+        val annotationPermission = (try { val permission= iClass.getAnnotation(CommandPermission::class.java).permission; permission.ifEmpty { "moefilter.$annotationCommand" } } catch (_: Exception) { "moefilter.$annotationCommand" })
         val annotationAllowConsole = iClass.isAnnotationPresent(ConsoleCanExecute::class.java)
-        val annotationDescription = getAnnotationDescription(c)
-        val annotationUsage = ( try { iClass.getAnnotation(CommandUsage::class.java).usage.toList() } catch (_: Exception) { listOf() } )
+        val annotationDescription = (try { getAnnotationDescription(c) } catch (_: Exception) { "This command dont have description." })
+        val annotationUsage = (try { iClass.getAnnotation(CommandUsage::class.java).usage.toList() } catch (_: Exception) { listOf() })
         if (commands.contains(annotationCommand)) { return }
         val parsed = ParsedInfo(annotationCommand, annotationDescription, annotationPermission, annotationUsage, annotationAllowConsole)
         parseCommand.put(c, parsed)

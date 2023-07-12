@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.common.check.mixed
 
 import catmoe.fallencrystal.moefilter.common.check.info.CheckInfo
@@ -16,8 +33,9 @@ import java.util.concurrent.TimeUnit
 
 object MixedCheck {
 
-    private val conf = LocalConfig.getAntibot().getConfig("general")
-    private val cache = Caffeine.newBuilder().expireAfterWrite(conf.getInt("max-cache-time").toLong(), TimeUnit.SECONDS)
+    private var conf = LocalConfig.getAntibot().getConfig("general")
+    private var maxCacheTime = conf.getLong("max-cache-time")
+    private var cache = Caffeine.newBuilder().expireAfterWrite(maxCacheTime, TimeUnit.SECONDS)
 
     private var joinCache = cache.build<InetAddress, String>()
     private var pingCache = cache.build<InetAddress, Boolean>()
@@ -67,10 +85,18 @@ object MixedCheck {
     }
 
     fun reload() {
-        joinCache = cache.build()
-        pingCache = cache.build()
-        if (type != DISABLED) { MessageUtil.logWarn("[MoeFilter] [MixedCheck] Mode is not disabled. If someone try to pass checking. They need to do it again.") }
-        type=loadType()
+        conf = LocalConfig.getAntibot().getConfig("general")
+        val type = loadType()
+        if (type == DISABLED && this.type == DISABLED) return
+        this.type = type
+        cache = Caffeine.newBuilder().expireAfterWrite(conf.getLong("max-cache-time"), TimeUnit.SECONDS)
+        val maxCacheTime = conf.getLong("max-cache-time")
+        if (this.maxCacheTime != maxCacheTime) {
+            joinCache = cache.build()
+            pingCache = cache.build()
+            this.maxCacheTime = maxCacheTime
+            MessageUtil.logWarn("[MoeFilter] [MixedCheck] Original mode is not disabled. If someone try to pass checking. They need to do it again.")
+        }
     }
 
 }

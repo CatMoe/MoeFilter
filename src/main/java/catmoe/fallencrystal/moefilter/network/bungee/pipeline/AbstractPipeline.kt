@@ -1,7 +1,7 @@
 package catmoe.fallencrystal.moefilter.network.bungee.pipeline
 
 import catmoe.fallencrystal.moefilter.api.proxy.ProxyCache
-import catmoe.fallencrystal.moefilter.common.utils.counter.ConnectionCounter
+import catmoe.fallencrystal.moefilter.common.counter.ConnectionCounter
 import catmoe.fallencrystal.moefilter.listener.firewall.FirewallCache
 import catmoe.fallencrystal.moefilter.listener.firewall.Throttler
 import catmoe.fallencrystal.moefilter.network.bungee.decoder.VarIntFrameDecoder
@@ -52,7 +52,6 @@ abstract class AbstractPipeline : ChannelInitializer<Channel>(), IPipeline {
         if (throttler != null && throttler.throttle(remoteAddress)) { channel.close(); return }
         eventCaller.call(EventCallMode.READY_DECODING)
 
-        if (ProxyCache.isProxy(inetAddress)) { FirewallCache.addAddress(inetAddress, true); channel.close(); return }
         if (!channel.isActive) { return }
         MoeChannelHandler.register(pipeline)
         PipelineUtils.BASE.initChannel(channel)

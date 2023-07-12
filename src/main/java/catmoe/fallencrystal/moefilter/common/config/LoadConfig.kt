@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.common.config
 
 import catmoe.fallencrystal.moefilter.MoeFilter
@@ -30,11 +47,11 @@ class LoadConfig {
     private val defaultConfig = """
                 version="$version"
                 # 启用调试? 启用后可以获得更多的用法用于调试
-                # 不要在生产环境中使用这个! 它可能会泄露你的服务器的关键信息.
+                # 不要在生产环境中使用这个! 它可能会导致发送大量垃圾邮件降低性能或泄露你的服务器的关键信息.
                 debug=false
                 
                 # 快速启动. 但不支持重载附属BungeeCord插件以及插件本身(例如BungeePluginManagerPlus重载).
-                fastboot=true
+                fastboot=false
                 
                 # f3服务端标识. 在较高版本的客户端上按F3即可看到.
                 # gradient和其它标签e.x <newline> 不可在此处使用
@@ -45,13 +62,18 @@ class LoadConfig {
                 # 仅当服务器为Linux并且启用了Epoll时此选项才有效! 如果您不知道这是什么 建议默认为0
                 # 0 = DISABLED, 1 = CLIENT, 2 = SERVER, 3 = BOTH, 4 = MANGLED
                 tfo-mode=0
+
+                domain-check {
+                    enabled=false
+                    allow-lists=["127.0.0.1", "localhost", "mc.miaomoe.net", "catmoe.realms.moe"]
+                }
                 
                 # Ping选项 该选项仅当antibot.conf中的mode为PIPELINE时有效
                 ping {
                     # 缓存选项
                     cache {
                         # 缓存有效时间. 单位为秒
-                        max-life-time: 5
+                        max-life-time=5
                         # 即使缓存了也呼叫ProxyPingEvent. 如果返回内容不同 则刷新缓存
                         still-call-event=true
                         # 是否为独立的域创建MOTD缓存?
@@ -142,6 +164,21 @@ class LoadConfig {
                         "<red>Your name is invalid or not allowed on this server.",
                         ""
                     ]
+                    invalid-host=[
+                        "",
+                        "<red>Please join server from mc.miaomoe.net",
+                        ""
+                    ]
+                    country=[
+                        "",
+                        "<red>Your country is not allowed on this server.",
+                        ""
+                    ]
+                    proxy=[
+                        "",
+                        "<red>This server is not allowed proxy/vpn.",
+                        ""
+                    ]
                 }
             """.trimIndent()
 
@@ -150,11 +187,11 @@ class LoadConfig {
                 
                 # 反机器人工作模式.
                 # PIPELINE(推荐): 接管BungeeCord管道 实现无效数据包检查和EVENT模式拥有的所有检查
-                 # 并且比EVENT更快. 但无法保证所有东西都兼容. 有关兼容的BungeeCord 请移步:
-                 # https://github.com/CatMoe/MoeFilter#%E5%AE%8C%E5%85%A8%E5%85%BC%E5%AE%B9%E7%9A%84bungeecord
-                 # EVENT: 使用传统事件组合的反机器人. 可以实现一些普通的检查 例如PingJoin, FirstJoin, etc
-                 # 理论上兼容所有BungeeCord分叉. 如果您在使用PIPELINE时出现了一些问题 可以选择使用该模式.
-                 # DISABLED: 什么也不做. (作为纯实用工具使用)
+                # 并且比EVENT更快. 但无法保证所有东西都兼容. 有关兼容的BungeeCord 请移步:
+                # https://github.com/CatMoe/MoeFilter#%E5%AE%8C%E5%85%A8%E5%85%BC%E5%AE%B9%E7%9A%84bungeecord
+                # EVENT: 使用传统事件组合的反机器人. 可以实现一些普通的检查 例如PingJoin, FirstJoin, etc
+                # 理论上兼容所有BungeeCord分叉. 如果您在使用PIPELINE时出现了一些问题 可以选择使用该模式.
+                # DISABLED: 什么也不做. (作为纯实用工具使用)
                 mode=PIPELINE
                 
                 # 选择事件呼叫时机 该选项仅当mode为PIPELINE时有效.
@@ -183,6 +220,17 @@ class LoadConfig {
                     # 有效名称正则. 默认正则的规则
                     # 即名称不能包含mcstorm, mcdown或bot字样. 名称只能含有数字 字母以及下划线 且长度限制在3-16
                     valid-regex="^(?!.*(?:mcstorm|mcdown|bot|cuute))[A-Za-z0-9_]{3,16}${'$'}"
+                    
+                    # 名称相似性检查
+                    # 该检查的踢出理由仍然将是 invalid-name
+                    similarity {
+                        # 是否启用?
+                        enable=false
+                        # 用户名的采样的最大个数
+                        max-list=10
+                        # 当字符串相似度达到该值 则不允许他们加入服务器
+                        length=4
+                    }
                 }
     """.trimIndent()
 
@@ -237,23 +285,18 @@ class LoadConfig {
                 
                 # 设置来自https://proxycheck.io的服务
                 proxycheck-io {
-                    enabled=true
+                    enabled=false
                     # API秘钥 您需要在上面注册一个账户才可以使用该服务.
-                    key = [
-                        "your-key-here"
-                    ]
-                    # 黑名单属性. 有VPN(代理), Business(主机供应商/企业), Wireless(家用网络)
-                    # 有需要可以将Business也加入 但这会阻止绝大多数加速器 并且有一定的误判风险.
-                    # Wireless没有专门用于区分有线网络和移动数据. 如果需要 请移步至IP-API
-                    blacklisted-type = ["VPN"]
-                    # 跟VPN属性不同. 对于proxycheck那边的解释是 VPN和Proxy不是一种东西 VPN属于虚拟专用网络 而Proxy属于代理.
-                    blacklist-proxy=true
+                    key="your-key-here"
                     # 单日可查询次数限制. 这取决于你的计划. 但由于我们并不真正保存使用次数 
                     # 而是作为插件在检查时的请求次数-1 以避免无限制调用接口.
-                    # 您可以使用多个API账户秘钥. 当到达throttle时 使用另一个API秘钥检查.
                     limit=1000
+                    # 检查并踢出vpn 但可能会导致消耗两次查询机会
+                    check-vpn=false
                     # 每分钟请求限制.
                     throttle=350
+                    # 如果您因为proxies-config中配置的代理而被proxycheck禁止访问 请将其设置为true
+                    direct-response=false
                 }
                 
                 ip-api {
@@ -267,11 +310,13 @@ class LoadConfig {
                 country {
                     # MaxMind Database下载许可key. 建议使用自己的许可证秘钥.
                     # https://dev.maxmind.com/geoip/geolite2-free-geolocation-data#accessing-geolite2-free-geolocation-data
-                    key="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"
+                    key="LARAgQo3Fw7W9ZMS"
                     # 模式. WHITELIST(白名单), BLACKLIST(黑名单) 或 DISABLED(禁用)
                     mode=DISABLED
-                    # 列表
-                    list = ["CN"]
+                    # 下载 & 查询超时时间 (ms)
+                    time-out=5000
+                    # https://dev.maxmind.com/geoip/legacy/codes/iso3166/
+                    list=["CN"]
                 }
                 
                 # 代理上网配置. 适用于所有API和内置反代理 爬取

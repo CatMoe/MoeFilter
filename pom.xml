@@ -8,12 +8,12 @@
     
     <groupId>catmoe.fallencrystal.moefilter</groupId>
     <artifactId>MoeFilter</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.9.0</kotlin.version>
-        <project.version>0.0.3</project.version>
+        <project.version>0.0.4</project.version>
     </properties>
     <packaging>jar</packaging>
 
@@ -200,6 +200,12 @@
             <groupId>com.maxmind.geoip2</groupId>
             <artifactId>geoip2</artifactId>
             <version>4.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>me.xdrop</groupId>
+            <artifactId>fuzzywuzzy</artifactId>
+            <version>1.4.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>

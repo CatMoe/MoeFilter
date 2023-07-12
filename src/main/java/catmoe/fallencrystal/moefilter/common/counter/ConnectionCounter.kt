@@ -1,4 +1,21 @@
-package catmoe.fallencrystal.moefilter.common.utils.counter
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package catmoe.fallencrystal.moefilter.common.counter
 
 import catmoe.fallencrystal.moefilter.MoeFilter
 import catmoe.fallencrystal.moefilter.util.plugin.util.Scheduler
@@ -24,14 +41,14 @@ object ConnectionCounter {
     private val perSecCache = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.SECONDS).build<Int, Int>()
     private val ipCache = Caffeine.newBuilder().build<InetAddress, Int>()
     private val ipPerSecCache =  Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.SECONDS).build<Int, Int>()
-    fun getConnectionPerSec(): Int { var cps=0; ticks.forEach { cps+=(perSecCache.getIfPresent(it) ?: 0) }; cps+=tempCPS; return cps }
-    fun getIpPerSec(): Int { var ipPerSec=0; ticks.forEach { ipPerSec+=(ipPerSecCache.getIfPresent(it) ?: 0) }; ipPerSec+=tempIpSec; return ipPerSec }
+    fun getConnectionPerSec(): Int { var cps=0; ticks.forEach { cps+=(perSecCache.getIfPresent(it) ?: 0) }; cps+= tempCPS; return cps }
+    fun getIpPerSec(): Int { var ipPerSec=0; ticks.forEach { ipPerSec+=(ipPerSecCache.getIfPresent(it) ?: 0) }; ipPerSec+= tempIpSec; return ipPerSec }
     fun getPeakConnectionPerSec(): Int { return peakCPS }
     fun increase(address: InetAddress) {
         val singleIpCount = ipCache.getIfPresent(address) ?: 0
         if (singleIpCount == 0) { tempIpSec++; ipCache.put(address, 1) }
         total++; tempCPS++; if (inAttack) { totalInSession++; } else { totalInSession = 0 }
-        if (getConnectionPerSec() > peakCPS) { peakCPS=getConnectionPerSec(); peakInSession = if (inAttack) peakCPS else 0 }
+        if (getConnectionPerSec() > peakCPS) { peakCPS = getConnectionPerSec(); peakInSession = if (inAttack) peakCPS else 0 }
     }
     fun getTotal(): Long { return total }
     fun getTotalSession(): Long { return totalInSession }

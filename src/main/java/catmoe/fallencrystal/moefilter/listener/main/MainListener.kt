@@ -1,9 +1,27 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.listener.main
 
-import catmoe.fallencrystal.moefilter.api.proxy.ProxyCache
+import catmoe.fallencrystal.moefilter.common.check.info.impl.AddressCheck
 import catmoe.fallencrystal.moefilter.common.check.info.impl.Pinging
+import catmoe.fallencrystal.moefilter.common.check.misc.DomainCheck
 import catmoe.fallencrystal.moefilter.common.check.mixed.MixedCheck
-import catmoe.fallencrystal.moefilter.common.utils.counter.ConnectionCounter
+import catmoe.fallencrystal.moefilter.common.counter.ConnectionCounter
 import catmoe.fallencrystal.moefilter.common.whitelist.WhitelistObject
 import catmoe.fallencrystal.moefilter.listener.firewall.FirewallCache
 import catmoe.fallencrystal.moefilter.listener.firewall.Throttler
@@ -12,6 +30,8 @@ import catmoe.fallencrystal.moefilter.network.bungee.handler.TimeoutHandler
 import catmoe.fallencrystal.moefilter.network.bungee.pipeline.IPipeline
 import catmoe.fallencrystal.moefilter.network.bungee.pipeline.MoeChannelHandler
 import catmoe.fallencrystal.moefilter.network.bungee.util.bconnection.ConnectionUtil
+import catmoe.fallencrystal.moefilter.network.bungee.util.kick.DisconnectType
+import catmoe.fallencrystal.moefilter.network.bungee.util.kick.FastDisconnect
 import com.github.benmanes.caffeine.cache.Caffeine
 import net.md_5.bungee.BungeeCord
 import net.md_5.bungee.api.connection.PendingConnection
@@ -44,13 +64,21 @@ object MainListener {
         // Use PendingConnection.version insteadof Handshake.protocolVersion.
 
         // Firewall who connected after an instant disconnected.
-        CompletableFuture.runAsync { if (!pc.isConnected && (handshake.requestedProtocol == 2) && !packetHandler.cancelled.get() && packetHandler.isAvailable.get()) {
-            FirewallCache.addAddressTemp(connection.inetAddress(), true)
-        } else if (handshake.requestedProtocol == 1) { MixedCheck.increase(Pinging(inetAddress)) } }
+
+        CompletableFuture.runAsync {
+            if (!connection.isConnected() && !packetHandler.cancelled.get() && packetHandler.isAvailable.get()) { addFirewall(
+                connection,
+                true
+            ) }
+        }
+
+        when (handshake.requestedProtocol) {
+            1 -> { MixedCheck.increase(Pinging(inetAddress)) }
+            2 -> { if (checkHost(connection)) { FastDisconnect.disconnect(connection, DisconnectType.INVALID_HOST); return } }
+            else -> { connection.close(); addFirewall(connection, false) }
+        }
 
         if (WhitelistObject.isWhitelist(inetAddress)) return
-
-        if (ProxyCache.isProxy(inetAddress)) { connection.close(); addFirewall(inetAddress, pc, false) }
 
         /*
         Prevent too many connections from being established from a single IP
@@ -66,15 +94,20 @@ object MainListener {
         if (connection.isConnected()) {
             val pipeline = connection.getPipeline() ?: return
             if (pipeline.channel().parent() != null && pipeline.channel().parent().javaClass.canonicalName.startsWith("org.geysermc.geyser")) return
-
             pipeline.replace(PipelineUtils.TIMEOUT_HANDLER, PipelineUtils.TIMEOUT_HANDLER, TimeoutHandler(BungeeCord.getInstance().getConfig().timeout.toLong()))
             pipeline.addBefore(PipelineUtils.BOSS_HANDLER, IPipeline.PACKET_INTERCEPTOR, packetHandler)
             pipeline.addLast(IPipeline.LAST_PACKET_INTERCEPTOR, MoeChannelHandler.EXCEPTION_HANDLER)
         } else { if (method != 1) { FirewallCache.addAddressTemp(inetAddress, true) } }
     }
 
-    private fun addFirewall(inetAddress: InetAddress, pc: PendingConnection, temp: Boolean) {
-        if (temp) FirewallCache.addAddressTemp(inetAddress, true) else FirewallCache.addAddress(inetAddress, true)
-        pc.disconnect()
+    private fun addFirewall(connection: ConnectionUtil, temp: Boolean) {
+        val address = connection.inetAddress()
+        if (temp) FirewallCache.addAddressTemp(address, true) else FirewallCache.addAddress(address, true)
+        connection.close()
+    }
+
+    private fun checkHost(connection: ConnectionUtil): Boolean {
+        val info = AddressCheck(connection.inetSocketAddress(), connection.virtualHost())
+        return DomainCheck.instance.increase(info)
     }
 }

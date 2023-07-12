@@ -31,14 +31,17 @@ class MoeInitialHandler(
     private val ctx: ChannelHandlerContext,
     listenerInfo: ListenerInfo,
 ) : InitialHandler(BungeeCord.getInstance(), listenerInfo), IPipeline {
+    private val channel = ctx.channel()
     private var currentState = ConnectionState.HANDSHAKE
+    private var inetSocketAddress: InetSocketAddress? = null
     private var inetAddress: InetAddress? = null
     private var pipeline: ChannelPipeline? = null
     @Throws(Exception::class)
     override fun connected(wrapper: ChannelWrapper) {
         super.connected(wrapper)
-        pipeline = wrapper.handle.pipeline()
-        inetAddress = (socketAddress as InetSocketAddress).address
+        this.pipeline = wrapper.handle.pipeline()
+        this.inetSocketAddress = socketAddress as InetSocketAddress
+        this.inetAddress = this.inetSocketAddress!!.address
     }
 
     @Throws(Exception::class)

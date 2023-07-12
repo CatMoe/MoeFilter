@@ -1,3 +1,20 @@
+/*
+ * Copyright 2023. CatMoe / FallenCrystal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package catmoe.fallencrystal.moefilter.api.command
 
 import catmoe.fallencrystal.moefilter.MoeFilter
@@ -47,14 +64,16 @@ class CommandHandler(name: String?, permission: String?, vararg aliases: String?
     private fun infoCommand(sender: CommandSender) {
         val version = MoeFilter.instance.description.version
         val line = if (sender.hasPermission("moefilter")) "  <yellow>使用 <white>/moefilter help <yellow>查看命令列表" else " <white> github.com/CatMoe/MoeFilter"
-        val message: List<String> = listOf(
-            "",
-            "  <aqua>Moe<white>Filter <gray>- <white>$version",
-            "",
-            line,
-            ""
+        MessageUtil.sendMessage(
+            listOf(
+                "",
+                "  <aqua>Moe<white>Filter <gray>- <white>$version",
+                "",
+                line,
+                ""
+            ).joinToString("<reset><newline>"),
+            MessagesType.CHAT, sender
         )
-        MessageUtil.sendMessage(message.joinToString("<reset><newline>"), MessagesType.CHAT, sender)
     }
 
 }
